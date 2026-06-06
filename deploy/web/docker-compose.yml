@@ -29,7 +29,7 @@ services:
       dockerfile: apps/web/Dockerfile
     restart: unless-stopped
     ports:
-      - "${CHATMUX_HTTP_PORT:-8080}:80"
+      - "10.0.0.35:${CHATMUX_HTTP_PORT:-8080}:80"
     depends_on:
       gateway:
         condition: service_healthy

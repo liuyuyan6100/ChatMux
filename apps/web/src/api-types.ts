@@ -127,6 +127,64 @@ export type UploadTerminalImageResponse = {
   remotePath: string;
 };
 
+export type UploadTerminalFileInput = {
+  credentialToken: string;
+  dataBase64: string;
+  fileName: string;
+  mimeType: string;
+};
+
+export type UploadTerminalFileResponse = {
+  remotePath: string;
+};
+
+export type RemoteFileEntry = {
+  name: string;
+  path: string;
+  size: number;
+  mode: string;
+  modTime: string;
+  isDir: boolean;
+};
+
+export type RemoteFileList = {
+  path: string;
+  parent: string;
+  entries: RemoteFileEntry[];
+};
+
+export type ResolveRemoteFilePathInput = {
+  credentialToken: string;
+  path?: string;
+  windowIndex?: number;
+};
+
+export type ListRemoteFilesInput = {
+  credentialToken: string;
+  path: string;
+};
+
+export type UploadRemoteFileInput = {
+  credentialToken: string;
+  dataBase64: string;
+  directory: string;
+  fileName: string;
+};
+
+export type UploadRemoteFileResponse = {
+  remotePath: string;
+};
+
+export type DownloadRemoteFileInput = {
+  credentialToken: string;
+  path: string;
+};
+
+export type DeleteRemoteFileInput = {
+  credentialToken: string;
+  path: string;
+};
+
 export type SaveSessionMetadataInput = {
   title: string;
   tags: string[];
@@ -138,5 +196,12 @@ export type TmuxSessionMetadata = {
   title: string;
   tags: string[];
   owner: string;
+  updatedAt: string;
+};
+
+export type HostLastWindow = {
+  hostId: string;
+  sessionName: string;
+  windowIndex: number;
   updatedAt: string;
 };

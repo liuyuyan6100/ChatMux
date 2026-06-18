@@ -10,20 +10,73 @@
   <img alt="Capacitor" src="https://img.shields.io/badge/Capacitor-8-119eff?logo=capacitor&logoColor=white">
 </p>
 
+<p align="center">
+  简体中文 | <a href="README.en.md">English</a>
+</p>
+
 ## 重要安全警告
 
 **Web 端必须只连接你自己部署、自己信任的 ChatMux Gateway。不要把服务器地址、SSH 用户名、SSH 密码、私钥、Gateway Token 或终端内容输入到任何外部网站、第三方演示站、陌生域名或未审计的托管服务。**
 
 ChatMux 的 Web SPA 会把你填写的主机信息和 SSH 凭据提交给配置的 Gateway，由 Gateway 代你连接远程服务器。也就是说，控制 Gateway 的人就处在你的 SSH 连接信任边界内。公开互联网部署时，请只暴露你自己的域名、启用 HTTPS、使用强随机 `CHATMUX_GATEWAY_TOKEN`，并把数据目录和 `.env` 文件放在你控制的机器上。
 
+## 快速自托管 (Docker Compose)
+
+生产 Web 端建议使用 `deploy/web/docker-compose.yml`。它会构建两个镜像：
+
+- `chatmux-gateway`：Go Gateway，保存 SQLite 数据并连接你的 SSH 主机。
+- `chatmux-web`：Nginx 静态站点，反代 `/api` 和 WebSocket 到 Gateway。
+
+### 1. 拉取代码
+
+```bash
+git clone git@github.com:binjie09/ChatMux.git
+cd ChatMux
+```
+
+### 2. 创建生产环境变量
+
+```bash
+cp deploy/web/.env.example deploy/web/.env
+```
+
+编辑 `deploy/web/.env`：
+
+```dotenv
+CHATMUX_HTTP_PORT=8080
+CHATMUX_GATEWAY_TOKEN=replace-with-a-long-random-token
+CHATMUX_DB=/data/chatmux.db
+```
+
+`CHATMUX_GATEWAY_TOKEN` 是 Web 登录 Gateway 的访问令牌，必须使用强随机值。不要提交 `.env`，不要把这个 token 发给不可信的人。
+
+### 3. 启动
+
+```bash
+docker compose --env-file deploy/web/.env -f deploy/web/docker-compose.yml up -d --build
+```
+
+如果你的环境只有旧版独立命令，可把 `docker compose` 替换为 `docker-compose`。
+
+访问 `http://你的服务器:8080`。如果放到公网，请在前面接入你自己的 HTTPS 反向代理，例如 Caddy、Nginx、Traefik 或云厂商负载均衡。
+
+### 4. 更新
+
+```bash
+git pull
+docker compose --env-file deploy/web/.env -f deploy/web/docker-compose.yml up -d --build
+```
+
+更多部署说明见 [docs/web-deployment.md](docs/web-deployment.md)。
+
 ## 移动端优先
 
 ChatMux 的核心体验面向手机和平板：主机管理、tmux 会话列表、窗口切换、真实终端输入和历史上下文都可以在窄屏里完成。
 
-| 真实终端主界面 | 会话列表 | 窗口管理 | 主机与 Gateway |
-| --- | --- | --- | --- |
-| <img src="docs/images/chatmux-mobile-terminal.jpg" alt="ChatMux 移动端终端操作截图" width="220"> | <img src="docs/images/chatmux-mobile-sessions.jpg" alt="ChatMux 移动端会话列表截图" width="220"> | <img src="docs/images/chatmux-mobile-windows.jpg" alt="ChatMux 移动端窗口列表截图" width="220"> | <img src="docs/images/chatmux-mobile-hosts.jpg" alt="ChatMux 移动端主机管理截图" width="220"> |
-| 快捷键、命令输入、图片上传粘贴、上下文和终端恢复都放在手机主工作流里。 | 查看 tmux session 状态，开启 session alerts，快速创建新会话。 | 在移动端切换 tmux window，管理每个 session 里的多窗口工作。 | 管理 Gateway Token、SSH Host、凭据状态和移动端安全解锁。 |
+| 真实终端主界面 | 文件管理 | 会话列表 | 窗口管理 | 主机与 Gateway |
+| --- | --- | --- | --- | --- |
+| <img src="docs/images/chatmux-mobile-terminal.png" alt="ChatMux 移动端终端操作截图" width="180"> | <img src="docs/images/chatmux-mobile-files.png" alt="ChatMux 移动端文件管理截图" width="180"> | <img src="docs/images/chatmux-mobile-sessions.jpg" alt="ChatMux 移动端会话列表截图" width="180"> | <img src="docs/images/chatmux-mobile-windows.jpg" alt="ChatMux 移动端窗口列表截图" width="180"> | <img src="docs/images/chatmux-mobile-hosts.jpg" alt="ChatMux 移动端主机管理截图" width="180"> |
+| 快捷键、命令输入、图片上传粘贴、上下文和终端恢复都放在手机主工作流里。 | 在移动端浏览远程目录、进入路径、刷新文件树并上传文件。 | 查看 tmux session 状态，开启 session alerts，快速创建新会话。 | 在移动端切换 tmux window，管理每个 session 里的多窗口工作。 | 管理 Gateway Token、SSH Host、凭据状态和移动端安全解锁。 |
 
 桌面端也可以展开为完整工作台：
 
@@ -33,12 +86,12 @@ ChatMux 的核心体验面向手机和平板：主机管理、tmux 会话列表�
 
 ## 目录
 
+- [快速自托管 (Docker Compose)](#快速自托管-docker-compose)
 - [移动端优先](#移动端优先)
 - [为什么是 ChatMux](#为什么是-chatmux)
 - [功能特性](#功能特性)
 - [技术栈](#技术栈)
-- [快速开始](#快速开始)
-- [Web 自托管部署](#web-自托管部署)
+- [本地开发快速开始](#本地开发快速开始)
 - [基础使用流程](#基础使用流程)
 - [安全模型](#安全模型)
 - [开发与打包](#开发与打包)
@@ -89,7 +142,7 @@ ChatMux 把 **tmux 会话** 作为远程工作的稳定载体：
 - 通信：HTTP JSON API + WebSocket stream
 - 包管理：pnpm workspace
 
-## 快速开始
+## 本地开发快速开始
 
 ### 1. 准备环境
 
@@ -118,55 +171,6 @@ docker-compose up -d --build
 
 打开 Web 后先输入 `.env` 里的 `CHATMUX_GATEWAY_TOKEN`，再添加自己的 SSH 主机。
 桌面端会启动 exe 内置的本地 Gateway，不需要输入 Gateway Token。
-
-## Web 自托管部署
-
-生产 Web 端建议使用 `deploy/web/docker-compose.yml`。它会构建两个镜像：
-
-- `chatmux-gateway`：Go Gateway，保存 SQLite 数据并连接你的 SSH 主机。
-- `chatmux-web`：Nginx 静态站点，反代 `/api` 和 WebSocket 到 Gateway。
-
-### 1. 拉取代码
-
-```bash
-git clone git@github.com:binjie09/ChatMux.git
-cd ChatMux
-```
-
-### 2. 创建生产环境变量
-
-```bash
-cp deploy/web/.env.example deploy/web/.env
-```
-
-编辑 `deploy/web/.env`：
-
-```dotenv
-CHATMUX_HTTP_PORT=8080
-CHATMUX_GATEWAY_TOKEN=replace-with-a-long-random-token
-CHATMUX_DB=/data/chatmux.db
-```
-
-`CHATMUX_GATEWAY_TOKEN` 是 Web 登录 Gateway 的访问令牌，必须使用强随机值。不要提交 `.env`，不要把这个 token 发给不可信的人。
-
-### 3. 启动
-
-```bash
-docker compose --env-file deploy/web/.env -f deploy/web/docker-compose.yml up -d --build
-```
-
-如果你的环境只有旧版独立命令，可把 `docker compose` 替换为 `docker-compose`。
-
-访问 `http://你的服务器:8080`。如果放到公网，请在前面接入你自己的 HTTPS 反向代理，例如 Caddy、Nginx、Traefik 或云厂商负载均衡。
-
-### 4. 更新
-
-```bash
-git pull
-docker compose --env-file deploy/web/.env -f deploy/web/docker-compose.yml up -d --build
-```
-
-更多部署说明见 [docs/web-deployment.md](docs/web-deployment.md)。
 
 ## 基础使用流程
 

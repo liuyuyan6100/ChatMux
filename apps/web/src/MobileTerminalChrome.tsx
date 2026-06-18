@@ -1,13 +1,15 @@
-import { ArrowLeft, Bot, Download, ListTree, Plus, Search, X } from "lucide-react";
+import { ArrowLeft, Bot, Download, Files, ListTree, Plus, X } from "lucide-react";
 import { type ReactNode } from "react";
 import { type TmuxWindow } from "./api";
 import { windowLabel } from "./session-window-utils";
+import { TerminalFileUploadButton } from "./TerminalFileUploadButton";
 import "./mobile-terminal.css";
 
-export type MobileTerminalSheet = "context" | "draft";
+export type MobileTerminalSheet = "draft" | "files";
 
 type MobileTerminalBarProps = {
   hostName: string;
+  loading: boolean;
   selectedWindowIndex: number | null;
   sessionName: string;
   title: string;
@@ -20,9 +22,11 @@ type MobileTerminalBarProps = {
   onInstallTmux: () => void;
   onOpenSheet: (sheet: MobileTerminalSheet) => void;
   onOpenWindow: (windowIndex: number) => void;
+  onUploadFile: ((file: File) => Promise<void>) | null;
 };
 
 type MobileTerminalSheetPanelProps = {
+  action?: ReactNode;
   children: ReactNode;
   open: boolean;
   title: string;
@@ -31,7 +35,7 @@ type MobileTerminalSheetPanelProps = {
 
 export function MobileTerminalBar(props: MobileTerminalBarProps) {
   return (
-    <header className={`mobile-terminal-bar ${props.tmuxFallbackActive ? "tmux-fallback" : ""}`}>
+    <header className={mobileTerminalBarClassName(props.loading, props.tmuxFallbackActive)}>
       <button type="button" aria-label="Back to sessions" onClick={props.onBack}>
         <ArrowLeft size={20} aria-hidden="true" />
       </button>
@@ -39,17 +43,20 @@ export function MobileTerminalBar(props: MobileTerminalBarProps) {
         <strong>{props.title}</strong>
         <span>{terminalSubtitle(props.hostName, props.sessionName, props.windowName)}</span>
       </div>
-      {props.tmuxFallbackActive ? (
-        <button
-          className="mobile-terminal-install"
-          type="button"
-          aria-label="Install tmux"
-          disabled={props.tmuxInstallPending}
-          onClick={props.onInstallTmux}
-        >
-          <Download size={18} aria-hidden="true" />
-          <span>{props.tmuxInstallPending ? "Installing" : "Install tmux"}</span>
-        </button>
+      {props.loading ? null : props.tmuxFallbackActive ? (
+        <>
+          <button
+            className="mobile-terminal-install"
+            type="button"
+            aria-label="Install tmux"
+            disabled={props.tmuxInstallPending}
+            onClick={props.onInstallTmux}
+          >
+            <Download size={18} aria-hidden="true" />
+            <span>{props.tmuxInstallPending ? "Installing" : "Install tmux"}</span>
+          </button>
+          {props.onUploadFile ? <TerminalFileUploadButton onUpload={props.onUploadFile} /> : null}
+        </>
       ) : (
         <>
           <div className="mobile-terminal-window-picker">
@@ -67,9 +74,10 @@ export function MobileTerminalBar(props: MobileTerminalBarProps) {
             <button type="button" aria-label="New window" onClick={props.onCreateWindow}>
               <Plus size={18} aria-hidden="true" />
             </button>
+            {props.onUploadFile ? <TerminalFileUploadButton onUpload={props.onUploadFile} /> : null}
           </div>
-          <button type="button" aria-label="Open context" onClick={() => props.onOpenSheet("context")}>
-            <Search size={19} aria-hidden="true" />
+          <button type="button" aria-label="Open files" onClick={() => props.onOpenSheet("files")}>
+            <Files size={19} aria-hidden="true" />
           </button>
           <button type="button" aria-label="Draft command" onClick={() => props.onOpenSheet("draft")}>
             <Bot size={19} aria-hidden="true" />
@@ -78,6 +86,14 @@ export function MobileTerminalBar(props: MobileTerminalBarProps) {
       )}
     </header>
   );
+}
+
+function mobileTerminalBarClassName(loading: boolean, tmuxFallbackActive: boolean) {
+  return [
+    "mobile-terminal-bar",
+    loading ? "loading" : "",
+    tmuxFallbackActive ? "tmux-fallback" : "",
+  ].filter(Boolean).join(" ");
 }
 
 function terminalSubtitle(hostName: string, sessionName: string, windowName: string) {
@@ -95,9 +111,10 @@ export function MobileTerminalSheetPanel(props: MobileTerminalSheetPanelProps) {
     <div className="mobile-terminal-sheet-layer">
       <button className="mobile-terminal-sheet-scrim" type="button" aria-label="Close panel" onClick={props.onClose} />
       <section className="mobile-terminal-sheet" aria-label={props.title}>
-        <header>
+        <header className={props.action ? "has-action" : ""}>
           <ListTree size={18} aria-hidden="true" />
           <strong>{props.title}</strong>
+          {props.action}
           <button type="button" aria-label="Close panel" onClick={props.onClose}>
             <X size={19} aria-hidden="true" />
           </button>

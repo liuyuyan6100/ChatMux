@@ -9,6 +9,7 @@ import {
   type CreateHostInput,
   type Host,
 } from "./api";
+import { clearLastWindowSelection, loadLastWindowSelection } from "./last-window-selection";
 import { errorMessage, sortHosts } from "./view-utils";
 
 type HostWorkspaceOptions = {
@@ -20,7 +21,8 @@ type HostWorkspaceOptions = {
 
 export function useHostWorkspace(options: HostWorkspaceOptions) {
   const [hosts, setHosts] = useState<Host[]>([]);
-  const [selectedHostId, setSelectedHostId] = useState("");
+  const [hostsLoaded, setHostsLoaded] = useState(false);
+  const [selectedHostId, setSelectedHostId] = useState(() => loadLastWindowSelection()?.hostId ?? "");
   const [hostSelectionVersion, setHostSelectionVersion] = useState(0);
   const [showHostForm, setShowHostForm] = useState(false);
   const selectedHost = hosts.find((host) => host.id === selectedHostId);
@@ -29,9 +31,11 @@ export function useHostWorkspace(options: HostWorkspaceOptions) {
     try {
       const nextHosts = await listHosts();
       setHosts(nextHosts);
-      setSelectedHostId((current) => current || nextHosts[0]?.id || "");
+      setSelectedHostId((current) => selectedHostIdFromHosts(current, nextHosts));
+      setHostsLoaded(true);
       options.onError("");
     } catch (err) {
+      setHostsLoaded(true);
       options.onError(errorMessage(err));
     }
   }
@@ -126,6 +130,9 @@ export function useHostWorkspace(options: HostWorkspaceOptions) {
   function removeHostFromList(hostId: string) {
     const remaining = hosts.filter((host) => host.id !== hostId);
     setHosts(remaining);
+    if (loadLastWindowSelection()?.hostId === hostId) {
+      clearLastWindowSelection();
+    }
     if (selectedHostId === hostId) {
       setSelectedHostId(remaining[0]?.id ?? "");
       options.onHostSelected();
@@ -142,6 +149,7 @@ export function useHostWorkspace(options: HostWorkspaceOptions) {
     handleTrustHost,
     handleUpdateHost,
     hosts,
+    hostsLoaded,
     hostSelectionVersion,
     refreshHosts,
     selectedHost,
@@ -149,4 +157,19 @@ export function useHostWorkspace(options: HostWorkspaceOptions) {
     setShowHostForm,
     showHostForm,
   };
+}
+
+function selectedHostIdFromHosts(current: string, hosts: Host[]) {
+  if (hostExists(hosts, current)) {
+    return current;
+  }
+  const lastSelection = loadLastWindowSelection();
+  if (lastSelection && hostExists(hosts, lastSelection.hostId)) {
+    return lastSelection.hostId;
+  }
+  return hosts[0]?.id || "";
+}
+
+function hostExists(hosts: Host[], hostId: string) {
+  return Boolean(hostId && hosts.some((host) => host.id === hostId));
 }

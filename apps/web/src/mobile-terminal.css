@@ -53,9 +53,9 @@
   .mobile-terminal-bar {
     display: grid;
     grid-template-areas:
-      "back title context draft"
+      "back title files draft"
       ". picker picker picker";
-    grid-template-columns: 44px minmax(0, 1fr) 44px 44px;
+    grid-template-columns: 44px minmax(0, 1fr) 40px 40px;
     align-items: center;
     gap: 5px 4px;
     min-height: 88px;
@@ -66,8 +66,15 @@
   }
 
   .mobile-terminal-bar.tmux-fallback {
-    grid-template-areas: "back title install";
-    grid-template-columns: 44px minmax(0, 1fr) auto;
+    grid-template-areas: "back title upload install";
+    grid-template-columns: 44px minmax(0, 1fr) 44px auto;
+    min-height: 56px;
+    padding: 7px 8px;
+  }
+
+  .mobile-terminal-bar.loading {
+    grid-template-areas: "back title";
+    grid-template-columns: 44px minmax(0, 1fr);
     min-height: 56px;
     padding: 7px 8px;
   }
@@ -77,7 +84,7 @@
   }
 
   .mobile-terminal-bar:not(.tmux-fallback) > button:nth-of-type(2) {
-    grid-area: context;
+    grid-area: files;
   }
 
   .mobile-terminal-bar:not(.tmux-fallback) > button:nth-of-type(3) {
@@ -122,7 +129,7 @@
   .mobile-terminal-window-picker {
     grid-area: picker;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 40px;
+    grid-template-columns: minmax(0, 1fr) 40px 40px;
     gap: 6px;
     min-width: 0;
   }
@@ -136,6 +143,14 @@
     color: #eff7f1;
     background: #0f1713;
     font-size: 13px;
+  }
+
+  .terminal-file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
   }
 
   .mobile-terminal-bar > button.mobile-terminal-install {
@@ -165,6 +180,10 @@
     margin-top: 0;
     color: inherit;
     font-size: inherit;
+  }
+
+  .mobile-terminal-bar > button.terminal-file-upload-button {
+    grid-area: upload;
   }
 
   .mobile-terminal-sheet-layer {
@@ -209,6 +228,10 @@
     background: #fffaf0;
   }
 
+  .mobile-terminal-sheet > header.has-action {
+    grid-template-columns: 22px minmax(0, 1fr) 40px 40px;
+  }
+
   .mobile-terminal-sheet > header button {
     display: grid;
     place-items: center;
@@ -226,12 +249,6 @@
     min-height: 0;
     overflow: auto;
     padding: 12px;
-  }
-
-  .mobile-terminal-sheet-body .history-panel,
-  .mobile-terminal-sheet-body .audit-panel {
-    min-height: 240px;
-    max-height: none;
   }
 
   .mobile-terminal-sheet-body .command-draft-panel {
